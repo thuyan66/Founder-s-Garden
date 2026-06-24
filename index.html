@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Founder's Garden — Build in Public</title>
+<meta name="description" content="A build-in-public habit tracker for founders. Set a rhythm, get a prompt, share your post, water the seed. Watch your story grow." />
+<meta name="theme-color" content="#2F8F5B" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Founder's Garden — Build in Public" />
+<meta property="og:description" content="You don't struggle to build. You struggle to share. One small post a day — watch it grow." />
+<meta property="og:image" content="og-cover.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Founder's Garden — Build in Public" />
+<meta name="twitter:description" content="You don't struggle to build. You struggle to share. One small post a day — watch it grow." />
+<meta name="twitter:image" content="og-cover.png" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23FBFCFA'/%3E%3Cpath d='M16 26 V14' stroke='%231F6B43' stroke-width='2.5' stroke-linecap='round'/%3E%3Cellipse cx='10' cy='15' rx='5' ry='2.6' fill='%232F8F5B' transform='rotate(-30 10 15)'/%3E%3Cellipse cx='22' cy='13' rx='5' ry='2.6' fill='%235FB87F' transform='rotate(30 22 13)'/%3E%3Cellipse cx='16' cy='9' rx='3' ry='4.5' fill='%232F8F5B'/%3E%3C/svg%3E" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin:0; padding:0; background:#FBFCFA; }
+  #root { min-height:100vh; }
+  #err { display:none; font-family:system-ui,sans-serif; max-width:600px; margin:60px auto; padding:24px; border:1px solid #E5A3A3; border-radius:12px; background:#fff; color:#7a1f1f; }
+  #err code { display:block; white-space:pre-wrap; margin-top:10px; font-size:13px; color:#444; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<div id="err"><strong>Something didn&apos;t load.</strong><code id="errmsg"></code></div>
+<script>
+  window.addEventListener('error', function(e){
+    var box=document.getElementById('err'), msg=document.getElementById('errmsg');
+    if(box){ box.style.display='block'; msg.textContent=(e.message||e.error||'Unknown error'); }
+  });
+  window.addEventListener('load', function(){
+    if(typeof React==='undefined'||typeof ReactDOM==='undefined'||typeof Babel==='undefined'){
+      var box=document.getElementById('err'), msg=document.getElementById('errmsg');
+      box.style.display='block';
+      msg.textContent='React, ReactDOM, or Babel could not load from the CDN. Check your connection or hard-refresh (Ctrl/Cmd+Shift+R).';
+    }
+  });
+</script>
+<script type="text/plain" id="appcode">
+
+
+const { useState, useMemo } = React;
+
+
+// ─────────────────────────────────────────────────────────────
+// Founder's Garden — a build-in-public habit tracker
+// Set a cadence → get a daily prompt → share the link → rate it → water the seed.
+// Solo, within-session state only. Plant is the hero.
+// ─────────────────────────────────────────────────────────────
+
+const PROMPTS = [
+  // Origin
+  "What made you start building this? Tell the one moment it clicked.",
+  "Introduce yourself and what you're building in 3 sentences. No jargon.",
+  "What did you do before this, and why did you leave it behind?",
+  "Describe the version of you from a year ago. What would surprise them today?",
+  "What's the unglamorous origin story nobody asks about?",
+  // The problem
+  "Describe the problem you're obsessed with — like you're explaining it to a friend.",
+  "Who hurts most from this problem? Paint a picture of their bad day.",
+  "What's the dumbest workaround people use today instead of a real solution?",
+  "Why hasn't anyone fixed this yet? Share your honest theory.",
+  "What's one statistic or fact about your problem that stops people cold?",
+  "Finish this: 'It's 2026 and people still have to ___.'",
+  // Behind the scenes
+  "Show what you worked on today. One screenshot, one sentence.",
+  "What does your actual workspace look like right now? Be real.",
+  "Share a tool, app, or trick that quietly makes your work better.",
+  "Walk through one small thing you built this week, step by step.",
+  "What's a task you've been avoiding? Say it out loud — commit publicly.",
+  "Post your messy first draft of something. Polish later.",
+  "What did you delete or throw away this week, and why it was right.",
+  // Decisions & lessons
+  "Share a hard decision you made recently. What did you trade off?",
+  "What's something you believed at the start that turned out to be wrong?",
+  "Describe a mistake that cost you time — and what you'd do differently.",
+  "What advice did you ignore that you now wish you'd taken?",
+  "What advice did you take that turned out to be bad for you specifically?",
+  "Share a moment you almost quit. What kept you going?",
+  "What's a 'best practice' everyone follows that you've decided to break?",
+  "Name a fear about your project you haven't admitted publicly until now.",
+  // Small wins
+  "Celebrate a small win from this week — even if it feels tiny.",
+  "Share your first piece of feedback that made you feel 'this could work.'",
+  "What's a number that went up this week? Tell the story behind it.",
+  "Who used your thing recently? Share what they did with it.",
+  "Share a kind message or moment that kept you going this week.",
+  "What's something that took 10 attempts but finally worked?",
+  "Post a before/after of something you improved.",
+  // Vision
+  "What does success look like for this in one year? Be specific.",
+  "If this works perfectly, what changes in the world? Dream a little.",
+  "What's the one feature or moment you can't wait to build next?",
+  "Describe your ideal user living their best day because of what you built.",
+  "What would you build if you had 10x the time and money?",
+  "What's a bigger problem this could grow into solving?",
+  // Ask the audience
+  "Ask your audience: what's the hardest part of [your problem] for them?",
+  "Post two options you're deciding between and ask people to vote.",
+  "Ask for one intro you need right now. Be specific about who.",
+  "What's a question you're stuck on? Put it out there and ask for help.",
+  "Ask people to try something and tell you the first thing they notice.",
+  "Run a quick poll about a habit or pain point in your space.",
+  "Ask: 'What would make you actually use something like this?'",
+  // Teaching & reflection
+  "Teach one thing you learned the hard way this month.",
+  "Share a resource that changed how you think — and why it mattered.",
+  "Explain a concept from your field that outsiders always get wrong.",
+  "Write the advice you'd give someone starting where you started.",
+  "Reflect on how far you've come since your first post. What's different?",
+  "Share a quote or idea you keep coming back to, and how you apply it.",
+];
+
+const CADENCES = [
+  { id: "daily", label: "Every day", perWeek: 7, sub: "Maximum momentum" },
+  { id: "3x", label: "3× a week", perWeek: 3, sub: "Strong rhythm" },
+  { id: "2x", label: "2× a week", perWeek: 2, sub: "Steady & sustainable" },
+  { id: "1x", label: "Once a week", perWeek: 1, sub: "Just getting started" },
+];
+
+const STAGES = [
+  { name: "Seed", min: 0 },
+  { name: "Sprout", min: 1 },
+  { name: "Seedling", min: 3 },
+  { name: "Sapling", min: 6 },
+  { name: "In bloom", min: 10 },
+  { name: "Flourishing", min: 15 },
+];
+
+// ── Palette (light, modern, Aalto-friendly) ──
+const C = {
+  bg: "#FBFCFA",
+  ink: "#1A2421",
+  sub: "#5C6B64",
+  line: "#E4E9E5",
+  card: "#FFFFFF",
+  leaf: "#2F8F5B",
+  leafLight: "#5FB87F",
+  leafDeep: "#1F6B43",
+  soil: "#C9A88B",
+  soilDeep: "#A8825F",
+  accent: "#0B5FFF", // Aalto-ish blue
+  sun: "#F4C04E",
+  star: "#F2B807",
+  faint: "#F1F5F2",
+};
+
+function stageFor(count) {
+  let s = STAGES[0];
+  for (const st of STAGES) if (count >= st.min) s = st;
+  return s;
+}
+
+// ── The hero: a plant that grows with `growth` (0..1) and can droop ──
+function Plant({ count, drooping }) {
+  const maxFor = 15;
+  const g = Math.min(count / maxFor, 1); // 0..1
+  const stage = stageFor(count);
+
+  const stemTop = 230 - g * 150; // grows upward
+  const sway = drooping ? -8 : 0;
+  const leafScale = 0.4 + g * 0.9;
+  const showFlowers = count >= 10;
+  const flowerCount = count >= 15 ? 5 : count >= 10 ? 3 : 0;
+
+  return (
+    <svg viewBox="0 0 260 300" width="100%" style={{ maxWidth: 280, display: "block", margin: "0 auto" }} role="img" aria-label={`Your plant: ${stage.name}`}>
+      <defs>
+        <linearGradient id="leafG" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={C.leafLight} />
+          <stop offset="100%" stopColor={C.leafDeep} />
+        </linearGradient>
+        <radialGradient id="potG" cx="0.5" cy="0.2" r="0.9">
+          <stop offset="0%" stopColor={C.soil} />
+          <stop offset="100%" stopColor={C.soilDeep} />
+        </radialGradient>
+      </defs>
+
+      {/* sun */}
+      <circle cx="212" cy="44" r="16" fill={C.sun} opacity={0.25 + g * 0.55} />
+
+      {/* pot */}
+      <path d="M92 248 L168 248 L160 292 L100 292 Z" fill="url(#potG)" />
+      <rect x="86" y="238" width="88" height="14" rx="4" fill={C.soilDeep} />
+
+      {/* stem + plant, animated group */}
+      <g style={{ transform: `rotate(${sway}deg)`, transformOrigin: "130px 240px", transition: "transform 700ms cubic-bezier(.2,.8,.2,1)" }}>
+        {/* stem */}
+        <path
+          d={`M130 240 Q${126 + sway} ${(240 + stemTop) / 2} 130 ${stemTop}`}
+          stroke={C.leafDeep}
+          strokeWidth={3 + g * 3}
+          fill="none"
+          strokeLinecap="round"
+          style={{ transition: "all 700ms cubic-bezier(.2,.8,.2,1)" }}
+        />
+
+        {/* leaves grow out in pairs as the plant gets taller */}
+        {count >= 1 && (
+          <g style={{ transition: "all 700ms" }}>
+            <ellipse cx="112" cy={stemTop + 70} rx={18 * leafScale} ry={9 * leafScale} fill="url(#leafG)" transform={`rotate(-28 112 ${stemTop + 70})`} />
+            <ellipse cx="148" cy={stemTop + 88} rx={18 * leafScale} ry={9 * leafScale} fill="url(#leafG)" transform={`rotate(28 148 ${stemTop + 88})`} />
+          </g>
+        )}
+        {count >= 3 && (
+          <g style={{ transition: "all 700ms" }}>
+            <ellipse cx="106" cy={stemTop + 30} rx={20 * leafScale} ry={10 * leafScale} fill="url(#leafG)" transform={`rotate(-34 106 ${stemTop + 30})`} />
+            <ellipse cx="154" cy={stemTop + 46} rx={20 * leafScale} ry={10 * leafScale} fill="url(#leafG)" transform={`rotate(34 154 ${stemTop + 46})`} />
+          </g>
+        )}
+        {count >= 6 && (
+          <g style={{ transition: "all 700ms" }}>
+            <ellipse cx="116" cy={stemTop + 4} rx={16 * leafScale} ry={8 * leafScale} fill="url(#leafG)" transform={`rotate(-40 116 ${stemTop + 4})`} />
+            <ellipse cx="144" cy={stemTop + 12} rx={16 * leafScale} ry={8 * leafScale} fill="url(#leafG)" transform={`rotate(40 144 ${stemTop + 12})`} />
+          </g>
+        )}
+
+        {/* crown leaf */}
+        <ellipse cx="130" cy={stemTop - 6} rx={14 * leafScale} ry={20 * leafScale} fill="url(#leafG)" style={{ transition: "all 700ms" }} />
+
+        {/* flowers */}
+        {showFlowers &&
+          Array.from({ length: flowerCount }).map((_, i) => {
+            const angle = (i / flowerCount) * Math.PI * 2;
+            const fx = 130 + Math.cos(angle) * 26;
+            const fy = stemTop + 6 + Math.sin(angle) * 22;
+            return (
+              <g key={i} style={{ transition: "all 700ms" }}>
+                {[0, 1, 2, 3, 4].map((p) => (
+                  <circle key={p} cx={fx + Math.cos((p / 5) * 6.28) * 6} cy={fy + Math.sin((p / 5) * 6.28) * 6} r="4.5" fill={C.sun} />
+                ))}
+                <circle cx={fx} cy={fy} r="3.5" fill={C.leafDeep} />
+              </g>
+            );
+          })}
+      </g>
+    </svg>
+  );
+}
+
+function Star({ filled, onClick, idx }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={`${idx} star${idx > 1 ? "s" : ""}`}
+      style={{
+        background: "none", border: "none", cursor: "pointer", padding: 2, lineHeight: 0,
+      }}
+    >
+      <svg width="30" height="30" viewBox="0 0 24 24">
+        <path
+          d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 18.9 6.1 22l1.2-6.5L2.5 9.9l6.6-.9z"
+          fill={filled ? C.star : "none"}
+          stroke={filled ? C.star : C.line}
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  );
+}
+
+function FoundersGarden() {
+  const [phase, setPhase] = useState("setup"); // setup | grow
+  const [cadence, setCadence] = useState(null);
+  const [count, setCount] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [prompt, setPrompt] = useState(PROMPTS[0]);
+  const [seen, setSeen] = useState([]);
+  const [link, setLink] = useState("");
+  const [rating, setRating] = useState(0);
+  const [log, setLog] = useState([]);
+  const [justWatered, setJustWatered] = useState(false);
+
+  const stage = stageFor(count);
+
+  function freshPrompt(exclude) {
+    const pool = PROMPTS.filter((p) => !exclude.includes(p));
+    const source = pool.length ? pool : PROMPTS;
+    return source[Math.floor(Math.random() * source.length)];
+  }
+
+  function start(cad) {
+    setCadence(cad);
+    const first = freshPrompt([]);
+    setPrompt(first);
+    setSeen([first]);
+    setPhase("grow");
+  }
+
+  const linkValid = /^https?:\/\/\S+\.\S+/.test(link.trim());
+  const canWater = linkValid && rating > 0;
+
+  function water() {
+    if (!canWater) return;
+    const newCount = count + 1;
+    setCount(newCount);
+    setStreak(streak + 1);
+    setLog([{ prompt, link: link.trim(), rating, n: newCount }, ...log]);
+    setJustWatered(true);
+    setTimeout(() => setJustWatered(false), 900);
+    const next = freshPrompt(seen);
+    setPrompt(next);
+    setSeen([...seen, next]);
+    setLink("");
+    setRating(0);
+  }
+
+  function skipPrompt() {
+    const next = freshPrompt(seen);
+    setPrompt(next);
+    setSeen([...seen, next]);
+  }
+
+  const toNext = useMemo(() => {
+    const idx = STAGES.findIndex((s) => s.name === stage.name);
+    const next = STAGES[idx + 1];
+    return next ? next.min - count : null;
+  }, [count, stage]);
+
+  const wrap = {
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    background: C.bg, color: C.ink, minHeight: "100%", padding: "0 0 40px",
+  };
+  const inner = { maxWidth: 460, margin: "0 auto", padding: "0 20px" };
+
+  return (
+    <div style={wrap}>
+      <style>{`
+        * { box-sizing: border-box; }
+        .fg-btn { transition: transform .12s ease, background .2s ease, box-shadow .2s ease; }
+        .fg-btn:active { transform: scale(.97); }
+        .fg-card { transition: box-shadow .2s ease; }
+        @keyframes drop { 0%{transform:translateY(-14px);opacity:0} 100%{transform:translateY(0);opacity:1} }
+        @keyframes pop { 0%{transform:scale(.5);opacity:0} 60%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+        .fg-droplet { animation: drop .6s ease forwards; }
+        @media (prefers-reduced-motion: reduce){ * { animation:none!important; transition:none!important; } }
+      `}</style>
+
+      {/* Header */}
+      <div style={{ ...inner, paddingTop: 28, paddingBottom: 8, textAlign: "center" }}>
+        <div style={{ fontSize: 12, letterSpacing: 2, textTransform: "uppercase", color: C.leaf, fontWeight: 600 }}>
+          Build in public
+        </div>
+        <h1 style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: 34, margin: "6px 0 0", letterSpacing: -0.5 }}>
+          Founder&apos;s Garden
+        </h1>
+        <p style={{ color: C.sub, fontSize: 15, margin: "8px 0 0", lineHeight: 1.5 }}>
+          You don&apos;t struggle to build. You struggle to share.<br />One small post a day. Watch it grow.
+        </p>
+      </div>
+
+      {phase === "setup" && (
+        <div style={{ ...inner, marginTop: 28 }}>
+          <div style={{ textAlign: "center", marginBottom: 18 }}>
+            <Plant count={0} drooping={false} />
+          </div>
+          <h2 style={{ fontFamily: "'Fraunces',serif", fontSize: 20, fontWeight: 600, textAlign: "center", margin: "0 0 4px" }}>
+            How often will you share?
+          </h2>
+          <p style={{ textAlign: "center", color: C.sub, fontSize: 14, margin: "0 0 20px" }}>
+            Pick a rhythm you can actually keep.
+          </p>
+          <div style={{ display: "grid", gap: 12 }}>
+            {CADENCES.map((c) => (
+              <button
+                key={c.id}
+                className="fg-btn fg-card"
+                onClick={() => start(c)}
+                style={{
+                  textAlign: "left", background: C.card, border: `1px solid ${C.line}`,
+                  borderRadius: 16, padding: "16px 18px", cursor: "pointer",
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                }}
+              >
+                <span>
+                  <span style={{ display: "block", fontWeight: 600, fontSize: 16 }}>{c.label}</span>
+                  <span style={{ display: "block", color: C.sub, fontSize: 13, marginTop: 2 }}>{c.sub}</span>
+                </span>
+                <span style={{ color: C.leaf, fontSize: 22 }}>→</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {phase === "grow" && (
+        <div style={{ ...inner, marginTop: 16 }}>
+          {/* Plant + stats */}
+          <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 22, padding: "20px 18px 16px", position: "relative", overflow: "hidden" }}>
+            {justWatered && (
+              <div className="fg-droplet" style={{ position: "absolute", left: "50%", top: 14, marginLeft: -6, width: 12, height: 16, borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%", background: C.accent, opacity: .8 }} />
+            )}
+            <Plant count={count} drooping={false} />
+            <div style={{ textAlign: "center", marginTop: 6 }}>
+              <span style={{ fontFamily: "'Fraunces',serif", fontSize: 19, fontWeight: 600 }}>{stage.name}</span>
+              {toNext != null && (
+                <span style={{ display: "block", color: C.sub, fontSize: 13, marginTop: 2 }}>
+                  {toNext} more {toNext === 1 ? "post" : "posts"} to grow
+                </span>
+              )}
+              {toNext == null && (
+                <span style={{ display: "block", color: C.leaf, fontSize: 13, marginTop: 2 }}>Fully flourishing — keep it alive 🌿</span>
+              )}
+            </div>
+            <div style={{ display: "flex", justifyContent: "center", gap: 28, marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.faint}` }}>
+              <Stat label="Posts" value={count} />
+              <Stat label="Streak" value={streak} suffix="🔥" />
+              <Stat label="Cadence" value={cadence?.perWeek} suffix="/wk" />
+            </div>
+          </div>
+
+          {/* Today's prompt */}
+          <div style={{ marginTop: 16, background: C.card, border: `1px solid ${C.line}`, borderRadius: 22, padding: "20px 18px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <span style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: C.leaf, fontWeight: 600 }}>Today&apos;s prompt</span>
+              <button className="fg-btn" onClick={skipPrompt} style={{ background: "none", border: "none", color: C.sub, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>
+                shuffle
+              </button>
+            </div>
+            <p style={{ fontFamily: "'Fraunces',serif", fontSize: 21, lineHeight: 1.35, margin: "0 0 18px", fontWeight: 500 }}>
+              {prompt}
+            </p>
+
+            <label style={{ display: "block", fontSize: 13, color: C.sub, marginBottom: 6, fontWeight: 500 }}>
+              Paste the link to your post
+            </label>
+            <input
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="https://..."
+              style={{
+                width: "100%", padding: "12px 14px", borderRadius: 12,
+                border: `1px solid ${linkValid || !link ? C.line : "#E5A3A3"}`,
+                fontSize: 15, outline: "none", marginBottom: 16, fontFamily: "inherit",
+              }}
+            />
+
+            <label style={{ display: "block", fontSize: 13, color: C.sub, marginBottom: 4, fontWeight: 500 }}>
+              How did it land?
+            </label>
+            <div style={{ display: "flex", gap: 2, marginBottom: 18 }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Star key={i} idx={i} filled={i <= rating} onClick={() => setRating(i)} />
+              ))}
+            </div>
+
+            <button
+              className="fg-btn"
+              onClick={water}
+              disabled={!canWater}
+              style={{
+                width: "100%", padding: "15px", borderRadius: 14, border: "none",
+                background: canWater ? C.leaf : C.faint,
+                color: canWater ? "#fff" : C.sub,
+                fontSize: 16, fontWeight: 600, cursor: canWater ? "pointer" : "not-allowed",
+                fontFamily: "inherit",
+                boxShadow: canWater ? "0 6px 16px rgba(47,143,91,.28)" : "none",
+              }}
+            >
+              💧 Water the seed
+            </button>
+            {!canWater && (
+              <p style={{ textAlign: "center", color: C.sub, fontSize: 12, margin: "10px 0 0" }}>
+                Add your post link and a rating to water.
+              </p>
+            )}
+          </div>
+
+          {/* Log */}
+          {log.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <h3 style={{ fontSize: 13, letterSpacing: 1, textTransform: "uppercase", color: C.sub, fontWeight: 600, margin: "0 0 10px 4px" }}>
+                Your trail
+              </h3>
+              <div style={{ display: "grid", gap: 8 }}>
+                {log.map((e, i) => (
+                  <div key={i} style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 14, padding: "12px 14px", animation: "drop .4s ease" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 14, color: C.ink, lineHeight: 1.4, flex: 1 }}>{e.prompt}</span>
+                      <span style={{ color: C.star, fontSize: 13, whiteSpace: "nowrap" }}>{"★".repeat(e.rating)}</span>
+                    </div>
+                    <a href={e.link} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: C.accent, textDecoration: "none", wordBreak: "break-all" }}>
+                      {e.link}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Community teaser */}
+          <div style={{ marginTop: 20, textAlign: "center", padding: "16px", border: `1px dashed ${C.line}`, borderRadius: 16, color: C.sub }}>
+            <span style={{ fontSize: 14 }}>🌱 Soon: see other founders&apos; gardens growing alongside yours.</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Stat({ label, value, suffix }) {
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div style={{ fontFamily: "'Fraunces',serif", fontSize: 22, fontWeight: 600, lineHeight: 1 }}>
+        {value}
+        {suffix && <span style={{ fontSize: 14, marginLeft: 2 }}>{suffix}</span>}
+      </div>
+      <div style={{ fontSize: 11, letterSpacing: 1, textTransform: "uppercase", color: C.sub, marginTop: 4 }}>{label}</div>
+    </div>
+  );
+}
+
+
+ReactDOM.createRoot(document.getElementById('root')).render(<FoundersGarden />);
+
+
+
+</script>
+<script>
+  (function(){
+    try {
+      var src = document.getElementById("appcode").textContent;
+      var compiled = Babel.transform(src, { presets: [["react", { runtime: "classic" }]] }).code;
+      var s = document.createElement("script");
+      s.textContent = compiled;
+      document.body.appendChild(s);
+    } catch(e){
+      var box=document.getElementById("err"), msg=document.getElementById("errmsg");
+      if(box){ box.style.display="block"; msg.textContent=e.message; }
+    }
+  })();
+</script>
+</body>
+</html>
