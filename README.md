@@ -3,10 +3,13 @@ A build-in-public habit tracker for founders. Built as an assignment for the Eco
 How it works
 
 
-Pick a rhythm — daily, 3×, 2×, or once a week. Choose something you can actually keep.
-Get today's prompt — drawn from a library of 50+ founder storytelling prompts spanning origin stories, the problem you're solving, behind-the-scenes, hard lessons, small wins, vision, and asking your audience. Shuffle if one doesn't fit.
-Share & rate — paste the link to your post and rate how it landed (1–5).
-Water the seed — every shared post grows your plant through six stages, from Seed to Flourishing, and builds your streak.
+1. Pick a rhythm: daily, 3×, 2×, or once a week. Choose something you can actually keep.
+
+2. Get today's prompt: drawn from a library of 50+ founder storytelling prompts spanning origin stories, the problem you're solving, behind-the-scenes, hard lessons, small wins, vision, and asking your audience. Shuffle if one doesn't fit.
+
+3. Share & rate: paste the link to your post and rate how it landed (1–5).
+
+4. Water the seed: every shared post grows your plant through six stages, from Seed to Flourishing, and builds your streak.
 
 
 The point isn't a perfect post. It's the rhythm and finding your voice through iteration.
